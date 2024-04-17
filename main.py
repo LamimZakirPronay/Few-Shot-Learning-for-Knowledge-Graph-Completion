@@ -210,7 +210,7 @@ class Model_Run(object):
 		hits5_file = open(self.datapath + "_hits5.txt", "w")
 		hits1_file = open(self.datapath + "_hits1.txt", "w")
 		mrr_file = open(self.datapath + "_mrr.txt", "w")
-		for data in train_generate(self.datapath, self.batch_size, self.few, self.symbol2id, self.ent2id, self.e1rel_e2):
+		for data in train_generate(self.datapath, self.batch_size, self.few, self.symbol2id, self.ent2id, self.max_batches):
 			support, query, false, support_left, support_right, query_left, query_right, false_left, false_right = data	
 
 			support_meta = self.get_meta(support_left, support_right)
@@ -258,12 +258,10 @@ class Model_Run(object):
 			self.optim.step()    
 
 			if self.batch_nums % self.eval_every == 0:
-				with open("output_base.txt", "a") as file:
-					file.write('batch num: '+str(self.batch_nums))
-					file.write('loss: '+str(loss))
 				print ('batch num: '+str(self.batch_nums))
 				print ('loss: '+str(loss))
 				hits10, hits5, hits1, mrr = self.eval(meta=self.meta)
+				self.eval(meta=self.meta, mode="dev")
 				#print (hits10)
 				hits10_file.write(str(("%.3f" % hits10)) + "\n")
 				hits5_file.write(str(("%.3f" % hits5)) + "\n")
@@ -477,11 +475,6 @@ class Model_Run(object):
 		print ('hits5: {:.3f}'.format(np.mean(hits5)))
 		print ('hits10: {:.3f}'.format(np.mean(hits10)))
 		print ('mrr: {:.3f}'.format(np.mean(mrr)))
-		with open("output_base.txt", "a") as file:
-			file.write('hits1: {:.3f}\n'.format(np.mean(hits1)))
-			file.write('hits5: {:.3f}\n'.format(np.mean(hits5)))
-			file.write('hits10: {:.3f}\n'.format(np.mean(hits10)))
-			file.write('mrr: {:.3f}\n'.format(np.mean(mrr)))
 
 		task_embed_f.close()
 		entity_embed_f.close()
@@ -489,60 +482,6 @@ class Model_Run(object):
 		self.matcher.train()
 
 		return np.mean(hits10), np.mean(hits5), np.mean(hits1), np.mean(mrr)
-
-
-	def TransE_eval(self, mode='test'):
-		symbol2id = self.symbol2id
-		few = self.few
-		self.symbol_emb = nn.Embedding(self.num_symbols + 1, self.embed_dim, padding_idx = self.num_symbols)
-		self.symbol_emb.weight.data.copy_(torch.from_numpy(self.symbol2vec))
-
-		if mode == 'dev':
-			test_tasks = json.load(open(self.datapath + '/dev_tasks.json'))
-		else:
-			test_tasks = json.load(open(self.datapath + '/test_tasks.json'))
-
-		rel2candidates = self.rel2candidates
-
-		hits10 = []
-		hits5 = []
-		hits1 = []
-		mrr = []
-
-		for query_ in test_tasks.keys():
-			print (symbol2id[query_])
-			hits10_ = []
-			hits5_ = []
-			hits1_ = []
-			mrr_ = []
-
-			candidates = rel2candidates[query_]
-
-			temp = 0
-			for triple in test_tasks[query_][few:]:
-				temp += 1
-				true = triple[2]
-				query_pairs = []
-				if triple[0] in symbol2id and triple[2] in symbol2id:
-					query_pairs.append([symbol2id[triple[0]], symbol2id[triple[2]]])
-
-				for ent in candidates:
-					if (ent not in self.e1rel_e2[triple[0]+triple[1]]) and ent != true:
-						query_pairs.append([symbol2id[triple[0]], symbol2id[ent]])
-
-				if self.cuda:
-					query = Variable(torch.LongTensor(query_pairs)).cuda()
-				else:
-					query = Variable(torch.LongTensor(query_pairs))	
-
-				query_left = query[:, 0].squeeze(-1)
-				query_right = query[:, 1].squeeze(-1)
-				query_left_embeds = self.symbol_emb(query_left)
-				query_right_embeds = self.symbol_emb(query_right)
-				relation_embed = self.symbol_emb(query_)
-
-				scores.detach()
-				scores = scores.data
 
 
 if __name__ == '__main__':
@@ -566,7 +505,5 @@ if __name__ == '__main__':
 	else:
 		model_run.train()
 
-	# TransE evaluation
-	#model_run.TransE_eval()
 
 

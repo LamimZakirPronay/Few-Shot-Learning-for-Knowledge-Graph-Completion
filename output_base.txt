@@ -1,0 +1,136 @@
+batch num: 0loss: tensor(22.1039, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.285
+hits5: 0.298
+hits10: 0.301
+mrr: 0.292
+hits1: 0.278
+hits5: 0.314
+hits10: 0.316
+mrr: 0.296
+batch num: 10000loss: tensor(16.3831, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.315
+hits5: 0.317
+hits10: 0.323
+mrr: 0.324
+hits1: 0.314
+hits5: 0.321
+hits10: 0.322
+mrr: 0.324
+batch num: 20000loss: tensor(5.9971, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.311
+hits5: 0.311
+hits10: 0.327
+mrr: 0.319
+hits1: 0.310
+hits5: 0.312
+hits10: 0.317
+mrr: 0.319
+batch num: 30000loss: tensor(5.9606, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.311
+hits5: 0.311
+hits10: 0.319
+mrr: 0.319
+hits1: 0.305
+hits5: 0.305
+hits10: 0.314
+mrr: 0.314
+batch num: 40000loss: tensor(6.1910, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.319
+hits5: 0.326
+hits10: 0.331
+mrr: 0.328
+hits1: 0.324
+hits5: 0.324
+hits10: 0.333
+mrr: 0.332
+batch num: 50000loss: tensor(9.9215, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.319
+hits5: 0.329
+hits10: 0.334
+mrr: 0.329
+hits1: 0.317
+hits5: 0.317
+hits10: 0.324
+mrr: 0.326
+batch num: 60000loss: tensor(6.7149, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.320
+hits5: 0.329
+hits10: 0.336
+mrr: 0.330
+hits1: 0.317
+hits5: 0.320
+hits10: 0.325
+mrr: 0.326
+batch num: 70000loss: tensor(1.0330, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.317
+hits5: 0.330
+hits10: 0.343
+mrr: 0.328
+hits1: 0.313
+hits5: 0.335
+hits10: 0.337
+mrr: 0.326
+batch num: 80000loss: tensor(3.7658, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.312
+hits5: 0.320
+hits10: 0.327
+mrr: 0.321
+hits1: 0.306
+hits5: 0.337
+hits10: 0.339
+mrr: 0.322
+batch num: 90000loss: tensor(2.6291, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.303
+hits5: 0.313
+hits10: 0.318
+mrr: 0.313
+hits1: 0.306
+hits5: 0.328
+hits10: 0.336
+mrr: 0.321
+batch num: 100000loss: tensor(1.7849, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.262
+hits5: 0.275
+hits10: 0.301
+mrr: 0.275
+hits1: 0.306
+hits5: 0.310
+hits10: 0.321
+mrr: 0.317
+batch num: 110000loss: tensor(0.8832, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.264
+hits5: 0.277
+hits10: 0.279
+mrr: 0.276
+hits1: 0.310
+hits5: 0.314
+hits10: 0.332
+mrr: 0.321
+batch num: 120000loss: tensor(1.1132, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.237
+hits5: 0.253
+hits10: 0.262
+mrr: 0.251
+hits1: 0.305
+hits5: 0.310
+hits10: 0.325
+mrr: 0.316
+batch num: 130000loss: tensor(2.4951, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.237
+hits5: 0.259
+hits10: 0.298
+mrr: 0.256
+hits1: 0.305
+hits5: 0.310
+hits10: 0.320
+mrr: 0.316
+batch num: 140000loss: tensor(3.1891, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.242
+hits5: 0.260
+hits10: 0.268
+mrr: 0.257
+hits1: 0.242
+hits5: 0.247
+hits10: 0.285
+mrr: 0.257
+batch num: 150000loss: tensor(5.6844, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.242
+hits5: 0.256
+hits10: 0.262
+mrr: 0.258
+hits1: 0.242
+hits5: 0.247
+hits10: 0.291
+mrr: 0.257
+batch num: 160000loss: tensor(4.2312, device='cuda:0', grad_fn=<AddBackward0>)hits1: 0.257
+hits5: 0.270
+hits10: 0.287
+mrr: 0.271
+hits1: 0.160
+hits5: 0.165
+hits10: 0.186
+mrr: 0.176
