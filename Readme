@@ -1,0 +1,9 @@
+Get data from: https://drive.google.com/uc?id=1ElKgnVcdoq7vdcC2N_N7lEeFP_Ughf_R&export=download
+
+Get pretrained embedding from: https://github.com/xwhan/One-shot-Relational-Learning
+
+Run the Primary.py File
+
+Run the Secondary.py File
+
+Run the code: python main.py 
