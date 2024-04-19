@@ -117,6 +117,12 @@ class EmbedMatcher_LSTMAE(nn.Module):
 		support_g = self.support_encoder(support) # 1 * 100
 		query_g = self.support_encoder(query)
 
+		# mean pooling for reference set
+		# support_g = torch.mean(support_g, dim=0, keepdim=True)
+
+		# lstm aggregation for reference set
+		#print (support_g.size())
+
 		# lstm autoencoder
 		support_g_0 = support_g.view(3, 1, 2 * self.embed_dim)
 		support_g_encoder, support_g_state = self.set_rnn_encoder(support_g_0)
@@ -128,12 +134,23 @@ class EmbedMatcher_LSTMAE(nn.Module):
 			decoder_set.append(support_g_decoder)
 		decoder_set = torch.cat(decoder_set, dim=0)
 
+		# FC autoencoder
+		# support_g = support_g.view(-1, 3 * 2 * self.embed_dim)
+		# support_g_encoder = self.set_FC_encoder(support_g)
+		# support_g_decoder = self.set_FC_decoder(support_g_encoder)
+
 		ae_loss = nn.MSELoss()(support_g_0, decoder_set.detach())
+		#ae_loss = 0
+
+		#support_g_encoder = torch.mean(support_g_encoder, 0).view(1, 2*self.embed_dim)
+		#support_g_encoder = support_g_encoder[-1].view(1, 2 * self.embed_dim)
 
 		support_g_encoder = support_g_encoder.view(3, 2 * self.embed_dim)
-
+		
 		support_g_encoder = support_g_0.view(3, 2 * self.embed_dim) + support_g_encoder
-
+		
+		#support_g_encoder = torch.mean(support_g_encoder, dim=0, keepdim=True)		
+		
 		support_g_att = self.set_att_W(support_g_encoder).tanh()
 		att_w = self.set_att_u(support_g_att)
 		att_w = self.softmax(att_w)
@@ -142,20 +159,18 @@ class EmbedMatcher_LSTMAE(nn.Module):
 
 		support_g_encoder = support_g_encoder.view(1, 2 * self.embed_dim)
 
+		#print (support_g_encoder.size())
+		#print (query_g.size())
+
 		query_f = self.query_encoder(support_g_encoder, query_g) # 128 * 100
 
+		#print (support_g_encoder.size())
+
+		# cosine similarity
+		#query_g = self.FC_query_g(query_g)
+		#support_g_encoder = self.FC_support_g_encoder(support_g_encoder)
+
 		matching_scores = torch.matmul(query_f, support_g_encoder.t()).squeeze()
-		
-		# Calculate translation vector
-		translation_vector = query_g - support_g_encoder
-
-		# Calculate translation score (L2 norm)
-		translation_score = torch.norm(translation_vector, p=2)  # L2 norm
-
-		# Adjust the final score by subtracting the scaled translation score
-		scaling_parameter = nn.Parameter(torch.FloatTensor(1), requires_grad=True).to(query.device)
-		nn.init.uniform_(scaling_parameter, a=0.0, b=1.0)  # Initialize parameter
-		matching_scores = matching_scores - scaling_parameter * translation_score
 
 		return matching_scores, ae_loss, support_g_encoder, query_g
 
