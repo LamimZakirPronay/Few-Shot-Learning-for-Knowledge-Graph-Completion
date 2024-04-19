@@ -14,12 +14,7 @@ class EmbedMatcher_LSTMAE(nn.Module):
 		self.aggregate = aggregate
 		self.num_symbols = num_symbols
 		self.layer_norm = LayerNormalization(2 * self.embed_dim)
-		self.gcn_w = nn.Linear(2*self.embed_dim, self.embed_dim)
-		self.gcn_b = nn.Parameter(torch.FloatTensor(self.embed_dim))
-		self.attn_w = nn.Linear(self.embed_dim, 1)
 
-		self.gate_w = nn.Linear(self.embed_dim, 1)
-		self.gate_b = nn.Parameter(torch.FloatTensor(1))
 		self.gnn_w = nn.Linear(2 * self.embed_dim, self.embed_dim)
 		self.gnn_b = nn.Parameter(torch.FloatTensor(self.embed_dim))
 
@@ -77,52 +72,30 @@ class EmbedMatcher_LSTMAE(nn.Module):
 		rel_embeds = self.dropout(self.symbol_emb(relations))  # (batch, 200, embed_dim)
 		ent_embeds = self.dropout(self.symbol_emb(entities))  # (batch, 200, embed_dim)
 
-		entity_self = connections[:,0,0].squeeze(-1)
-		entself_embeds = self.dropout(self.symbol_emb(entity_self))
+		concat_embeds = torch.cat((rel_embeds, ent_embeds), dim=-1)  # (batch, 200, 2*embed_dim)
 
-		entself_embeds = entself_embeds.squeeze(1)
+		#out_0 = self.gnn_w(concat_embeds)
+		# out = torch.sum(out_0, dim=1)  # (batch, embed_dim)
+		# out = out / num_neighbors
 
-		concat_embeds = torch.cat((rel_embeds, ent_embeds), dim=-1) # (batch, 200, 2*embed_dim)
-
-		out = self.gcn_w(concat_embeds) + self.gcn_b       # out gcn former change log
-		out = F.leaky_relu(out)                            # out gcn former change log
-
-		attn_out = self.attn_w(out)
-		attn_weight = F.softmax(attn_out, dim=1)
-		out_attn = torch.bmm(out.transpose(1,2), attn_weight)
-		out_attn = out_attn.squeeze(2)
-		gate_tmp = self.gate_w(out_attn) + self.gate_b
-		gate = torch.sigmoid(gate_tmp)
-		out_neigh = torch.mul(out_attn, gate)
-		out_neighbor = out_neigh + torch.mul(entself_embeds, 1.0-gate)
-
-		return out_neighbor.tanh()
-
-		# concat_embeds = torch.cat((rel_embeds, ent_embeds), dim=-1)  # (batch, 200, 2*embed_dim)
-
-		# #out_0 = self.gnn_w(concat_embeds)
-		# # out = torch.sum(out_0, dim=1)  # (batch, embed_dim)
-		# # out = out / num_neighbors
-
-		# # attention aggregation
-		# # out = self.neigh_att_W(out_0).tanh()
-		# # att_w = self.neigh_att_u(out)
-		# # att_w = self.softmax(att_w).view(out_0.size()[0], 1, 30)
-		# # out = torch.bmm(att_w, out_0).view(out_0.size()[0], 100)
-
-		# out = self.neigh_att_W(concat_embeds).tanh()
+		# attention aggregation
+		# out = self.neigh_att_W(out_0).tanh()
 		# att_w = self.neigh_att_u(out)
-		# att_w = self.softmax(att_w).view(concat_embeds.size()[0], 1, 30)
-		# out = torch.bmm(att_w, ent_embeds).view(concat_embeds.size()[0], self.embed_dim)
+		# att_w = self.softmax(att_w).view(out_0.size()[0], 1, 30)
+		# out = torch.bmm(att_w, out_0).view(out_0.size()[0], 100)
 
-		# # print (out.size())
+		out = self.neigh_att_W(concat_embeds).tanh()
+		att_w = self.neigh_att_u(out)
+		att_w = self.softmax(att_w).view(concat_embeds.size()[0], 1, 30)
+		out = torch.bmm(att_w, ent_embeds).view(concat_embeds.size()[0], self.embed_dim)
 
-		# # out = out.view(30, -1, self.embed_dim)
-		# # out, out_state = self.neigh_rnn(out)
-		# # out = torch.mean(out, 0).view(-1, self.embed_dim)
-		# # return out
-		# return out.tanh()
+		# print (out.size())
 
+		# out = out.view(30, -1, self.embed_dim)
+		# out, out_state = self.neigh_rnn(out)
+		# out = torch.mean(out, 0).view(-1, self.embed_dim)
+		# return out
+		return out.tanh()
 
 
 	def forward(self, query, support, query_meta=None, support_meta=None):
@@ -144,12 +117,6 @@ class EmbedMatcher_LSTMAE(nn.Module):
 		support_g = self.support_encoder(support) # 1 * 100
 		query_g = self.support_encoder(query)
 
-		# mean pooling for reference set
-		# support_g = torch.mean(support_g, dim=0, keepdim=True)
-
-		# lstm aggregation for reference set
-		#print (support_g.size())
-
 		# lstm autoencoder
 		support_g_0 = support_g.view(3, 1, 2 * self.embed_dim)
 		support_g_encoder, support_g_state = self.set_rnn_encoder(support_g_0)
@@ -161,22 +128,11 @@ class EmbedMatcher_LSTMAE(nn.Module):
 			decoder_set.append(support_g_decoder)
 		decoder_set = torch.cat(decoder_set, dim=0)
 
-		# FC autoencoder
-		# support_g = support_g.view(-1, 3 * 2 * self.embed_dim)
-		# support_g_encoder = self.set_FC_encoder(support_g)
-		# support_g_decoder = self.set_FC_decoder(support_g_encoder)
-
 		ae_loss = nn.MSELoss()(support_g_0, decoder_set.detach())
-		#ae_loss = 0
-
-		#support_g_encoder = torch.mean(support_g_encoder, 0).view(1, 2*self.embed_dim)
-		#support_g_encoder = support_g_encoder[-1].view(1, 2 * self.embed_dim)
 
 		support_g_encoder = support_g_encoder.view(3, 2 * self.embed_dim)
 
 		support_g_encoder = support_g_0.view(3, 2 * self.embed_dim) + support_g_encoder
-
-		#support_g_encoder = torch.mean(support_g_encoder, dim=0, keepdim=True)
 
 		support_g_att = self.set_att_W(support_g_encoder).tanh()
 		att_w = self.set_att_u(support_g_att)
@@ -186,18 +142,20 @@ class EmbedMatcher_LSTMAE(nn.Module):
 
 		support_g_encoder = support_g_encoder.view(1, 2 * self.embed_dim)
 
-		#print (support_g_encoder.size())
-		#print (query_g.size())
-
 		query_f = self.query_encoder(support_g_encoder, query_g) # 128 * 100
 
-		#print (support_g_encoder.size())
-
-		# cosine similarity
-		#query_g = self.FC_query_g(query_g)
-		#support_g_encoder = self.FC_support_g_encoder(support_g_encoder)
-
 		matching_scores = torch.matmul(query_f, support_g_encoder.t()).squeeze()
+		
+		# Calculate translation vector
+		translation_vector = query_g - support_g_encoder
+
+		# Calculate translation score (L2 norm)
+		translation_score = torch.norm(translation_vector, p=2)  # L2 norm
+
+		# Adjust the final score by subtracting the scaled translation score
+		scaling_parameter = nn.Parameter(torch.FloatTensor(1), requires_grad=True).to(query.device)
+		nn.init.uniform_(scaling_parameter, a=0.0, b=1.0)  # Initialize parameter
+		matching_scores = matching_scores - scaling_parameter * translation_score
 
 		return matching_scores, ae_loss, support_g_encoder, query_g
 
@@ -261,7 +219,7 @@ class QueryEncoder(nn.Module):
 		return:
 		(batch_size, query_dim)
 		'''
-
+		
 		assert support.size()[1] == query.size()[1]
 
 		if self.process_step == 0:
@@ -284,3 +242,4 @@ class QueryEncoder(nn.Module):
 		# return h_r_[:, :self.input_dim]
 		return h
 
+		
